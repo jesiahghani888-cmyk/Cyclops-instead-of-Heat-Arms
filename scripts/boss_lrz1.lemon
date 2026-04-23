@@ -1,0 +1,31 @@
+//# address-hook(0x0787e0) end(0x0787f8)
+function void fn0787e0()
+{
+	if (global.zone_act == 0x0900)
+	{
+		if (allocDynamicObjectStd())
+		{
+			objA1.update_address = 0x0711be
+		}
+
+		// Spawn boss giblets
+		// "spawnChildObjects(0x078d9e)" replaced by:
+		spawnChildObject(0x078a70, 0x00, 0, -12)
+		spawnChildObject(0x078a70, 0x02, -25, -12)
+		spawnChildObject(0x078a70, 0x04, 25, -12)
+		spawnChildObject(0x078a70, 0x06, -12, 34)
+		spawnChildObject(0x078a70, 0x08, 12, 34)
+		spawnChildObject(0x078a70, 0x0a, -8, 54)
+		spawnChildObject(0x078a70, 0x0c, 8, 54)
+		spawnChildObject(0x078a70, 0x0e, -18, 4)
+		spawnChildObject(0x078a70, 0x10, 18, 4)
+		spawnChildObject(0x078a70, 0x12, -18, 12)
+		spawnChildObject(0x078a70, 0x14, 18, 12)
+
+		SetupAsSignpostSpawner()
+	}
+	else
+	{
+		base.fn0787e0()
+	}
+}
