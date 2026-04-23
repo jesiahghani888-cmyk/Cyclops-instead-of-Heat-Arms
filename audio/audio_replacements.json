@@ -1,0 +1,5 @@
+{
+	"SecretBoss_Theme": { "File": "SecretBossFull_KeyChange.ogg", "Type": "Music", "LoopStart": "410467" },
+	"SecretBoss_Theme_Fast": { "File": "SecretBossFull_KeyChange_fast.ogg", "Type": "Music", "LoopStart": "445521" },
+	"float": { "File": "float.ogg", "Type": "Sound" }
+}
