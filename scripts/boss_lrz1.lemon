@@ -1,0 +1,120 @@
+// Sonic 3 A.I.R. Custom Boss Mod
+// Replaces Heat Arms in Lava Reef Zone Act 1 with a Secret Boss
+
+//# address-hook(0x0787e0) end(0x0787f8)
+function void fn0787e0()
+{
+	if (global.zone_act == 0x0900)
+	{
+		// Check if we should use the secret boss
+		if (Secret_Boss_Toggle)
+		{
+			if (allocDynamicObjectStd())
+			{
+				// Initialize the secret boss instead of Heat Arms
+				// Using the ICZ1 boss init logic as a template for the secret boss
+				boss.remaining_hits = Secret_Boss_Hits
+				objA1.update_address = 0x0711be // Secret Boss Update Address
+				
+				// Reset boss states
+				Pinchmode = false
+				Wait_timer = 0
+				StateTimer = 0
+				Global_Health_Tracker = 0
+				ScreenStop = false
+				PlayAnim = false
+				StopSecretBoss = false
+				Health_Control = false
+				PlayTheSound = false
+			}
+			
+			// Setup as signpost spawner to end the level after boss is defeated
+			SetupAsSignpostSpawner()
+			return
+		}
+	}
+
+	// Default Heat Arms behavior if not in LRZ1 or Secret Boss is disabled
+	if (allocDynamicObjectStd())
+	{
+		objA1.update_address = 0x078aa8
+	}
+
+	// Spawn boss giblets
+	spawnChildObject(0x078a70, 0x00, 0, -12)
+	spawnChildObject(0x078a70, 0x02, -25, -12)
+	spawnChildObject(0x078a70, 0x04, 25, -12)
+	spawnChildObject(0x078a70, 0x06, -12, 34)
+	spawnChildObject(0x078a70, 0x08, 12, 34)
+	spawnChildObject(0x078a70, 0x0a, -8, 54)
+	spawnChildObject(0x078a70, 0x0c, 8, 54)
+	spawnChildObject(0x078a70, 0x0e, -18, 4)
+	spawnChildObject(0x078a70, 0x10, 18, 4)
+	spawnChildObject(0x078a70, 0x12, -18, 12)
+	spawnChildObject(0x078a70, 0x14, 18, 12)
+
+	SetupAsSignpostSpawner()
+}
+
+// Update Standalone.onWriteToSpriteTable to handle LRZ1
+function bool Standalone.onWriteToSpriteTable(s16 px, s16 py, u16 renderQueue)
+{
+	if (Secret_Boss_Toggle && global.zone_act == 0x0900)
+	{
+		// Reuse the sprite drawing logic from ICZ1 for LRZ1
+		if (objA0.update_address == 0x0711be || objA0.update_address == 0x085668)
+		{
+			u64 key
+			u64 eyes
+			u64 Blinky
+			u8 flag = 0
+			u8 animationSpriteEx = 0
+
+			if (PlayAnim)
+				animationSpriteEx = ((global.framecounter >> 2) % (3) + 0x00)
+
+			key = stringformat("Spin_%d", animationSpriteEx)
+			eyes = (objA0.velocity.x < 0) ? "Eye_L" : "Eye_R"
+
+			if (!BlinkControl && (global.framecounter >> 2) % 2)
+				Blinky = "Blinky_Pink"
+			else
+				Blinky = "Blinky_Blue"
+
+			if (Renderer.hasCustomSprite(key))
+				Renderer.drawCustomSprite(key, px, py + 16, 0, flag, renderQueue)
+			if (Renderer.hasCustomSprite(eyes) && objA0.velocity.x != 0)
+				Renderer.drawCustomSprite(eyes, px, py, 0, flag, renderQueue + 1)
+
+			if (Renderer.hasCustomSprite(Blinky))
+				Renderer.drawCustomSprite(Blinky, px, py, 0, flag, renderQueue + 1)
+			
+			return true
+		}
+		
+		if (objA0.update_address == 0x071446) // Hitbox
+			return true
+
+		if (objA0.update_address == 0x085102) // Broken state
+		{
+			u8 sprite_num = (objA0.subtype2c == 0x00) ? 0 : (objA0.subtype2c == 0x02) ? 1 : (objA0.subtype2c == 0x04) ? 2 : 3
+			u64 key = stringformat("Broken_%d", sprite_num)
+			if (Renderer.hasCustomSprite(key))
+				Renderer.drawCustomSprite(key, px, py, 0, 0, renderQueue)
+			return true
+		}
+	}
+	
+	return base.Standalone.onWriteToSpriteTable(px, py, renderQueue)
+}
+
+// Update music for LRZ1
+function u64 Standalone.getModdedSoundKey(u64 soundKey, u8 sfxId, u8 soundRegType)
+{
+	if (global.zone_act == 0x0900 && Secret_Boss_Toggle)
+	{
+		if (sfxId == MUSIC_MINIBOSS || sfxId == MUSIC_MINIBOSS_2)
+			return (Pinchmode) ? "SecretBoss_Theme_Fast" : "SecretBoss_Theme"
+	}
+	return base.Standalone.getModdedSoundKey(soundKey, sfxId, soundRegType)
+}

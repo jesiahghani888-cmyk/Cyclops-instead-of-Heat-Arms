@@ -1,5 +1,5 @@
 global bool Pinchmode
-global bool Secret_Boss_Toggle
+global bool Secret_Boss_Toggle = true
 
 // This function is here only for script mods that want to change the sound key, e.g. to play a custom music track / sound effect
 function u64 Standalone.getModdedSoundKey(u64 soundKey, u8 sfxId, u8 soundRegType)
