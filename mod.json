@@ -1,0 +1,41 @@
+{
+  "Metadata": 
+  {
+    "Name": "Cyclops instead of Heat Arms",
+    "Author": "iCloudius",
+    "Description": "This Mod Replaced the Heat Arms with Cyclops. Prepare for Boss Fight.",
+    "URL": "",
+    "ModVersion": "SHC",
+    "GameVersion": "v22.05.15.0"
+  },
+  	"Settings":
+	{
+		"Settings":
+		[
+			{
+				"InternalName": "Boss Toggle",
+				"DisplayName": "Secret Boss Toggle",
+				"Variable": "Secret_Boss_Toggle",
+				"Category": "Secret Boss",
+				"DefaultValue": "1",
+				"Options":
+				{
+					"0": "Off",
+					"1": "On"
+				}
+			},
+			{
+				"InternalName": "Hits",
+				"DisplayName": "Secret Boss hits",
+				"Variable": "Secret_Boss_Hits",
+				"Category": "Secret Boss",
+				"DefaultValue": "12",
+				"Options":
+				{
+					"12": "12 hits",
+					"18": "18 hits"
+				}
+			}
+		]
+	}
+}
