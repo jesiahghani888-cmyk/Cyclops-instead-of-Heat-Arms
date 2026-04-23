@@ -3,13 +3,17 @@ function void fn0787e0()
 {
 	if (global.zone_act == 0x0900)
 	{
+		// Set the toggle for the secret boss
+		Secret_Boss_Toggle = true
+		Secret_Boss_Hits = 8
+
 		if (allocDynamicObjectStd())
 		{
+			// 0x0711be is the address for Big Icedus / Cyclops update logic in our mod
 			objA1.update_address = 0x0711be
 		}
 
-		// Spawn boss giblets
-		// "spawnChildObjects(0x078d9e)" replaced by:
+		// Spawn boss giblets (visual effect for the transition)
 		spawnChildObject(0x078a70, 0x00, 0, -12)
 		spawnChildObject(0x078a70, 0x02, -25, -12)
 		spawnChildObject(0x078a70, 0x04, 25, -12)
