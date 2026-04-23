@@ -1,26 +1,10 @@
-// Sonic 3 A.I.R. Custom Boss Mod
-// Secret Boss Script (Cyclops)
-// Replaces Heat Arms in LRZ1 with Cyclops
-
-global bool Secret_Boss_Toggle = true
-global u8 Secret_Boss_Hits = 12
 global bool Pinchmode
-global u8 Global_Health_Tracker
-global bool Health_Control
-global bool ScreenStop
-global bool PlayAnim
-global bool StopSecretBoss
-global bool PlayTheSound
-global bool BlinkControl
-global u32 StateTimer
-global u8 state
-global u16 Wait_timer
-global u16 Velocity_Backup
+global bool Secret_Boss_Toggle
 
 // This function is here only for script mods that want to change the sound key, e.g. to play a custom music track / sound effect
 function u64 Standalone.getModdedSoundKey(u64 soundKey, u8 sfxId, u8 soundRegType)
 {
-	if ((global.zone_act == 0x0500 || global.zone_act == 0x0900) && Secret_Boss_Toggle)
+	if (global.zone_act.apparent == 0x0900 && Secret_Boss_Toggle)
 	{
 		if (sfxId == MUSIC_MINIBOSS || sfxId == MUSIC_MINIBOSS_2)
 			return (Pinchmode) ? "SecretBoss_Theme_Fast" : "SecretBoss_Theme"
@@ -31,11 +15,15 @@ function u64 Standalone.getModdedSoundKey(u64 soundKey, u8 sfxId, u8 soundRegTyp
 
 function void InitializeStoneRetreat()
 {
-    if (global.zone_act == 0x0500 || global.zone_act == 0x0900)
+    if (global.zone_act.apparent == 0x0900)
         return
         
     base.InitializeStoneRetreat()
 }
+
+global u8 Secret_Boss_Hits
+
+global bool ScreenStop // Prevents the screenshaking from being played every frame
 
 function bool TopRoute()
 {
@@ -50,10 +38,11 @@ function bool Standalone.onWriteToSpriteTable(s16 px, s16 py, u16 renderQueue)
 	u8 flag = 0
 	if (Secret_Boss_Toggle)
 	{
-		if (global.zone_act == 0x0500 || global.zone_act == 0x0900)
+		if (global.zone_act.apparent == 0x0900)
 		{
-			if (objA0.update_address == 0x0711be || objA0.update_address == 0x085668) // Big Icedus / Secret Boss
+			if (objA0.update_address == 0x0711be || objA0.update_address == 0x085668) // Big Icedus
 			{
+
 				u8 animationSpriteEx = 0
 
 				if (PlayAnim)
@@ -68,12 +57,13 @@ function bool Standalone.onWriteToSpriteTable(s16 px, s16 py, u16 renderQueue)
 				else
 					Blinky = "Blinky_Blue"
 
+
 				if (Renderer.hasCustomSprite(key))
 					Renderer.drawCustomSprite(key, px, py + 16, 0, flag, renderQueue)
 				if (Renderer.hasCustomSprite(eyes) && objA0.velocity.x != 0)
 					Renderer.drawCustomSprite(eyes, px, py, 0, flag, renderQueue + 1)
 
-				if (Renderer.hasCustomSprite(Blinky) && (global.zone_act == 0x0500 ? TopRoute() : true))
+				if (Renderer.hasCustomSprite(Blinky) && TopRoute())
 					Renderer.drawCustomSprite(Blinky, px, py, 0, flag, renderQueue + 1)
 				return true
 			}
@@ -100,10 +90,13 @@ function bool Standalone.onWriteToSpriteTable(s16 px, s16 py, u16 renderQueue)
 			if (Renderer.hasCustomSprite(key))
 				Renderer.drawCustomSprite(key, px, py, 0, flag, renderQueue)
 			return true
+
 		}
 	}
 	return base.Standalone.onWriteToSpriteTable(px, py, renderQueue)
 }
+
+global bool PlayAnim // Play the secret boss's spinning animation
 
 //# address-hook(0x07117e) end(0x0711aa)
 function void fn07117e()
@@ -120,16 +113,17 @@ function void fn07117e()
 		StopSecretBoss = false
 		Health_Control = false
 		PlayTheSound = false
+		Pinchmode = false
 	}
 	base.fn07117e()
 }
 
 //# address-hook(0x0711b6) end(0x0711bc)
-function void Boss.ICZ1.Init()
+function void Boss.LRZ1.Init()
 {
 	if (!Secret_Boss_Toggle)
 	{
-		base.Boss.ICZ1.Init()
+		base.Boss.LRZ1.Init()
 		return
 	}
 
@@ -138,24 +132,38 @@ function void Boss.ICZ1.Init()
 }
 
 //# address-hook(0x0711be) end(0x0711d0)
-function void Boss.ICZ1.BaseUpdate()
+function void Boss.LRZ1.BaseUpdate()
 {
 	if (!Secret_Boss_Toggle)
 	{
-		base.Boss.ICZ1.BaseUpdate()
+		base.Boss.LRZ1.BaseUpdate()
 		return
 	}
 
+	// Targets (see "Boss.LRZ1.UpdateState" variants)
+	//  - 0x0711ec	-> objA0.base_state = 0x00
+	//  - 0x07122a	-> objA0.base_state = 0x02
+	//  - 0x071252	-> objA0.base_state = 0x04
+	//  - 0x07127e	-> objA0.base_state = 0x06
+	//  - 0x0712c4	-> objA0.base_state = 0x08
+	//  - 0x071300	-> objA0.base_state = 0x0a
+	//  - 0x07127e	-> objA0.base_state = 0x0c
+	//  - 0x07135e	-> objA0.base_state = 0x0e
+	//  - 0x07138a	-> objA0.base_state = 0x10
+	//  - 0x0713ac	-> objA0.base_state = 0x12
+	//  - 0x07122a	-> objA0.base_state = 0x14
 	call tableLookupAddress(0x0711d6, objA0.base_state)
+
+	// Boss.LRZ1.RegularUpdate()
 	Enemy.DrawDynamicObject()
 }
 
 //# address-hook(0x0711ec) end(0x071224)
-function void Boss.ICZ1.UpdateState00()
+function void Boss.LRZ1.UpdateState00()
 {
 	if (!Secret_Boss_Toggle)
 	{
-		base.Boss.ICZ1.UpdateState00()
+		base.Boss.LRZ1.UpdateState00()
 		return
 	}
 
@@ -170,11 +178,15 @@ function void Boss.ICZ1.UpdateState00()
 	objA0.countdown_callback = 0x071236
 
 #if STANDALONE
+	// Move to the center of the screen
 	objA0.position.x.u16 = 0xB0 + (camera.position.x.u16 + (getScreenExtend() / 2))
+
+	// Set x-velocity for arc depending on screen width
 	objA0.value3e = 0x200 + (108 * getScreenExtend() / 40)
 #endif
 
 	ScreenStop = true
+
 	state = 0
 
 	spawnChildObject(0x071446, 0x04, 0, 18) // Body hurt box
@@ -197,12 +209,19 @@ function void fn071498()
 	AddAsDynamicObject()
 }
 
+global u32 StateTimer // Timer for hold long to wait before changing to the next boss state
+
+global u8 state
+
+global bool StopSecretBoss // Controls when the secret boss should stop
+
+// State handler
 //# address-hook(0x071252) end(0x071252)
-function void Boss.ICZ1.UpdateState04()
+function void Boss.LRZ1.UpdateState04()
 {
 	if (!Secret_Boss_Toggle)
 	{
-		base.Boss.ICZ1.UpdateState04()
+		base.Boss.LRZ1.UpdateState04()
 		return
 	}
 
@@ -212,6 +231,7 @@ function void Boss.ICZ1.UpdateState04()
 	if (boss.remaining_hits <= (Secret_Boss_Hits/2) && !StopSecretBoss)
 	{
 		playMusic(0x2E)
+
 		objA0.velocity.x = (objA0.velocity.x < 0) ? -800 : 800
 		StopSecretBoss = 1
 	}
@@ -289,15 +309,19 @@ function void FallingIcicles(u16 location, u8 Math)
 	}
 }
 
+global bool PlayTheSound
+global bool BlinkControl
+
 function void BossOnground(bool WaterHeightCheck)
 {
+
 	if (water.height.target > 0x900 && WaterHeightCheck)
 	{
 		BlinkControl = false
 		fallingrocks()
 		if (!PlayTheSound)
 		{
-			if (global.zone_act == 0x0500 ? TopRoute() : true)
+			if (TopRoute())
 				Audio.playAudio("float", AudioContext.CONTEXT_SOUND)
 			PlayTheSound = true
 		}
@@ -352,7 +376,10 @@ function void BossOnground(bool WaterHeightCheck)
 			state = 2
 		}
 	}
+
 	water.height.changerate = 10
+	
+
 }
 
 //# address-hook(0x27E2D0)
@@ -432,6 +459,9 @@ function void fallingrocks()
 	}
 }
 
+global u16 Velocity_Backup
+global u16 Wait_timer
+
 function void Goingdown(bool WaterHeightCheck)
 {
 	if (water.height.target < 0x98d)
@@ -457,6 +487,7 @@ function void Goingdown(bool WaterHeightCheck)
 	}
 	else
 	{
+
 		if (Wait_timer < 180 && !StopSecretBoss)
 			++Wait_timer
 		else
@@ -467,6 +498,7 @@ function void Goingdown(bool WaterHeightCheck)
 				objA0.velocity.x = Velocity_Backup
 			}
 			Wait_timer = 0
+			state = 0
 		}
 	}
 }
@@ -479,9 +511,12 @@ function void Screenshake()
 	objA0.velocity.x = -objA0.velocity.x
 }
 
+global bool Health_Control
+
 // Control the boss' health
 function void HealthHandler()
 {
+	
 	if (objA0.collision_attributes != 0)
         return
 
@@ -498,7 +533,7 @@ function void HealthHandler()
 		AddScoreForBossEnemy()
 
 	#if STANDALONE
-		if (global.zone_act == 0x0500 && isMainCharacter(CHARACTER_KNUCKLES) && camera.position.y.u16 < 0x0700)
+		if (isMainCharacter(CHARACTER_KNUCKLES) && camera.position.y.u16 < 0x0700)
 		{
 			Game.setAchievementComplete(ACHIEVEMENT_ICZ_KNUX_SUNRISE)
 		}
@@ -522,13 +557,16 @@ function void HealthHandler()
 		u8[A0 + 0x28] = u8[A0 + 0x25]
 	}
 	Global_Health_Tracker = objA0.state
+
 }
+
+global u8 Global_Health_Tracker
 
 //# address-hook(0x085c00) end(0x085c16)
 function void fn085c00()
 {
 	base.fn085c00()
-	if (water.height.target < 0xad8 && global.zone_act == 0x0500 && Secret_Boss_Toggle)
+	if (water.height.target < 0xad8 && global.zone_act.apparent == 0x0900 && Secret_Boss_Toggle)
 	{
 		++water.height.target
 		++water.height.next
@@ -541,56 +579,4 @@ function u8 Mighty_checkForCustomSpikyObj()
 		return 2
 
 	return base.Mighty_checkForCustomSpikyObj()
-}
-
-// LRZ1 Boss Hook
-//# address-hook(0x0787e0) end(0x0787f8)
-function void fn0787e0()
-{
-	if (global.zone_act == 0x0900 && Secret_Boss_Toggle)
-	{
-		if (allocDynamicObjectStd())
-		{
-			// Initialize the secret boss instead of Heat Arms
-			boss.remaining_hits = Secret_Boss_Hits
-			objA1.update_address = 0x0711be // Secret Boss Update Address
-			
-			// Reset boss states
-			Pinchmode = false
-			Wait_timer = 0
-			StateTimer = 0
-			Global_Health_Tracker = 0
-			ScreenStop = false
-			PlayAnim = false
-			StopSecretBoss = false
-			Health_Control = false
-			PlayTheSound = false
-		}
-		
-		// Setup as signpost spawner to end the level after boss is defeated
-		SetupAsSignpostSpawner()
-		return
-	}
-
-	// Default Heat Arms behavior
-	if (allocDynamicObjectStd())
-	{
-		objA1.update_address = 0x078aa8
-	}
-
-	// Spawn boss giblets
-	// "spawnChildObjects(0x078d9e)" replaced by:
-	spawnChildObject(0x078a70, 0x00, 0, -12)
-	spawnChildObject(0x078a70, 0x02, -25, -12)
-	spawnChildObject(0x078a70, 0x04, 25, -12)
-	spawnChildObject(0x078a70, 0x06, -12, 34)
-	spawnChildObject(0x078a70, 0x08, 12, 34)
-	spawnChildObject(0x078a70, 0x0a, -8, 54)
-	spawnChildObject(0x078a70, 0x0c, 8, 54)
-	spawnChildObject(0x078a70, 0x0e, -18, 4)
-	spawnChildObject(0x078a70, 0x10, 18, 4)
-	spawnChildObject(0x078a70, 0x12, -18, 12)
-	spawnChildObject(0x078a70, 0x14, 18, 12)
-
-	SetupAsSignpostSpawner()
 }
