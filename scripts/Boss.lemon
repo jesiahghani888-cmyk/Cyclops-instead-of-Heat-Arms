@@ -1,5 +1,6 @@
 // Sonic 3 A.I.R. Custom Boss Mod
 // Secret Boss Script (Cyclops)
+// Replaces Heat Arms in LRZ1 with Cyclops
 
 global bool Secret_Boss_Toggle = true
 global u8 Secret_Boss_Hits = 12
@@ -578,6 +579,7 @@ function void fn0787e0()
 	}
 
 	// Spawn boss giblets
+	// "spawnChildObjects(0x078d9e)" replaced by:
 	spawnChildObject(0x078a70, 0x00, 0, -12)
 	spawnChildObject(0x078a70, 0x02, -25, -12)
 	spawnChildObject(0x078a70, 0x04, 25, -12)
